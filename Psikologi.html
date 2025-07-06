@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress Belajar Psikologi // Cyberpunk Edition</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js for doughnut charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --cyber-cyan: #00FFFF;
+            --cyber-magenta: #FF00FF;
+            --cyber-purple: #8A2BE2;
+            --bg-dark: #0d0d1a;
+            --bg-card: rgba(20, 20, 40, 0.6);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(ellipse at top, rgba(0, 255, 255, 0.15), transparent 70%),
+                radial-gradient(ellipse at bottom, rgba(138, 43, 226, 0.15), transparent 70%),
+                radial-gradient(
+                    circle at 1px 1px, 
+                    rgba(255,255,255,0.05) 1px, 
+                    transparent 0
+                );
+            background-size: 100% 100%, 100% 100%, 20px 20px;
+            background-attachment: fixed;
+            color: #E0E0E0;
+            overflow-x: hidden;
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .custom-checkbox {
+            appearance: none;
+            background-color: #1a1a1a;
+            border: 1px solid var(--cyber-cyan);
+            border-radius: 4px;
+            width: 1.25rem;
+            height: 1.25rem;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            box-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+        }
+
+        .custom-checkbox:checked {
+            background-color: var(--cyber-magenta);
+            border-color: var(--cyber-magenta);
+            box-shadow: 0 0 10px var(--cyber-magenta);
+        }
+
+        .custom-checkbox:checked::after {
+            content: '✔';
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.8rem;
+        }
+
+        .checklist-item label:has(input:checked) span {
+            text-decoration: line-through;
+            text-decoration-color: var(--cyber-magenta);
+            color: #6b7280;
+        }
+        
+        .phase-card {
+            background-color: var(--bg-card);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, var(--cyber-magenta), var(--cyber-cyan));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 150px;
+            width: 150px;
+        }
+
+        .scroll-animate {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .scroll-animate.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .progress-bar-container {
+            background-color: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 4px;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+        }
+
+        .progress-bar {
+            height: 12px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--cyber-purple), var(--cyber-magenta));
+            transition: width 0.5s ease-in-out;
+        }
+
+        /* Gemini Feature Styles */
+        .gemini-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.4);
+            color: var(--cyber-cyan);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 8px;
+        }
+        .gemini-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 8px var(--cyber-cyan);
+        }
+        .case-study-btn {
+            background: rgba(255, 0, 255, 0.1);
+            border: 1px solid rgba(255, 0, 255, 0.4);
+            color: var(--cyber-magenta);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 16px;
+        }
+        .case-study-btn:hover {
+            background: rgba(255, 0, 255, 0.2);
+            box-shadow: 0 0 8px var(--cyber-magenta);
+        }
+
+        /* Modal Styles */
+        #gemini-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(13, 13, 26, 0.8);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        #gemini-modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--cyber-cyan);
+            border-radius: 12px;
+            padding: 24px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+        #gemini-modal.visible .modal-content {
+            transform: scale(1);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--cyber-cyan);
+        }
+        .modal-close-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .modal-body {
+            line-height: 1.6;
+            color: #ccc;
+        }
+        .modal-body p {
+            margin-bottom: 1rem;
+        }
+        .modal-body strong {
+            color: var(--cyber-magenta);
+        }
+
+        /* Loader */
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--cyber-cyan);
+            border-radius: 50%;
+            display: inline-block;
+            position: relative;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        .loader::after {
+            content: '';  
+            box-sizing: border-box;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 3px solid;
+            border-color: var(--cyber-magenta) transparent;
+        }
+
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        } 
+    </style>
+</head>
+<body>
+
+    <div class="content-wrapper container mx-auto px-4 py-8 md:py-16">
+        <header class="text-center mb-12 scroll-animate">
+            <h1 class="text-4xl md:text-6xl font-black tracking-tighter gradient-text mb-4">Peta Jalan Belajar Psikologi</h1>
+            <p class="text-lg text-gray-400 max-w-2xl mx-auto">Selami kompleksitas pikiran dan perilaku manusia, dari dasar hingga terapan, kini dengan bantuan AI.</p>
+        </header>
+
+        <!-- Overall Progress Section -->
+        <section class="mb-16 scroll-animate" style="transition-delay: 100ms;">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-lg font-bold text-gray-200">Progres Keseluruhan</h2>
+                <span id="overall-progress-text" class="font-bold text-lg gradient-text">0%</span>
+            </div>
+            <div class="progress-bar-container">
+                <div id="overall-progress-bar" class="progress-bar" style="width: 0%;"></div>
+            </div>
+        </section>
+
+
+        <!-- Progress Charts Section -->
+        <section id="progress-charts" class="mb-16">
+            <h2 class="text-2xl md:text-3xl font-bold text-center mb-8 text-gray-200 scroll-animate" style="transition-delay: 200ms;">Ringkasan Progres Fase</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 justify-items-center">
+                <!-- Chart canvases will be injected here by JS -->
+            </div>
+        </section>
+
+        <!-- Learning Path Section -->
+        <main id="learning-path" class="space-y-8">
+            <!-- Phases will be injected here by JS -->
+        </main>
+        
+        <footer class="text-center mt-16 text-gray-500 scroll-animate">
+            <p>Dibuat dengan rasa ingin tahu. Progres disimpan secara lokal di browser Anda.</p>
+        </footer>
+    </div>
+
+    <!-- Gemini Modal -->
+    <div id="gemini-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title" class="modal-title">Memuat...</h3>
+                <button class="modal-close-btn" id="modal-close">&times;</button>
+            </div>
+            <div id="modal-body" class="modal-body">
+                <div class="flex justify-center items-center h-48">
+                    <div class="loader"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // --- DATA KURIKULUM PSIKOLOGI ---
+        const curriculum = [
+            {
+                title: "Fase 1: Fondasi Psikologi",
+                topics: [
+                    {
+                        title: "1. Pengantar Psikologi & Sejarah",
+                        items: [
+                            "Apa itu Psikologi?: Definisi dan ruang lingkup ilmu psikologi.",
+                            "Sejarah Psikologi: Dari filsafat kuno hingga laboratorium modern (Wundt).",
+                            "Aliran Pemikiran Utama: Strukturalisme, Fungsionalisme, Psikoanalisis, Behaviorisme, Humanistik, Kognitif."
+                        ]
+                    },
+                    {
+                        title: "2. Metode Penelitian dalam Psikologi",
+                        items: [
+                            "Metode Ilmiah: Langkah-langkah dalam penelitian psikologis.",
+                            "Penelitian Deskriptif: Studi kasus, survei, dan observasi naturalistik.",
+                            "Penelitian Korelasional: Memahami hubungan antar variabel (bukan sebab-akibat).",
+                            "Penelitian Eksperimental: Menentukan hubungan sebab-akibat (variabel independen & dependen).",
+                            "Etika dalam Penelitian Psikologi: Prinsip moral dalam studi manusia dan hewan."
+                        ]
+                    }
+                ]
+            },
+            {
+                title: "Fase 2: Otak & Pikiran",
+                topics: [
+                    {
+                        title: "3. Biopsikologi & Sistem Saraf",
+                        items: [
+                            "Struktur Neuron: Komponen dasar sistem saraf.",
+                            "Komunikasi Antar Neuron: Potensial aksi dan neurotransmitter.",
+                            "Sistem Saraf Pusat & Tepi: Organisasi otak, sumsum tulang belakang, dan saraf lainnya.",
+                            "Struktur Otak & Fungsinya: Lobus otak (frontal, parietal, dll) dan sistem limbik."
+                        ]
+                    },
+                    {
+                        title: "4. Sensasi & Persepsi",
+                        items: [
+                            "Proses Sensasi vs Persepsi: Mendeteksi stimulus vs menginterpretasikannya.",
+                            "Sistem Visual: Bagaimana mata dan otak memproses cahaya.",
+                            "Sistem Auditori: Bagaimana telinga dan otak memproses suara.",
+                            "Indra Lainnya: Pengecapan, penciuman, sentuhan, dan keseimbangan.",
+                            "Prinsip Pengorganisasian Persepsi (Gestalt): Bagaimana otak mengelompokkan informasi."
+                        ]
+                    },
+                    {
+                        title: "5. Tingkat Kesadaran",
+                        items: [
+                            "Siklus Tidur & Mimpi: Tahapan tidur (REM & NREM) dan teori tentang mimpi.",
+                            "Hipnosis: Keadaan kesadaran yang berubah dan sugestibilitas.",
+                            "Pengaruh Psikoaktif: Efek depresan, stimulan, dan halusinogen pada kesadaran."
+                        ]
+                    }
+                ]
+            },
+            {
+                title: "Fase 3: Proses Belajar & Kognitif",
+                topics: [
+                    {
+                        title: "6. Belajar (Learning)",
+                        items: [
+                            "Pengkondisian Klasik (Pavlov): Belajar melalui asosiasi stimulus.",
+                            "Pengkondisian Operan (Skinner): Belajar melalui konsekuensi (penguatan & hukuman).",
+                            "Belajar Observasional (Bandura): Belajar dengan mengamati orang lain."
+                        ]
+                    },
+                    {
+                        title: "7. Memori",
+                        items: [
+                            "Model Memori: Proses encoding, storage, dan retrieval.",
+                            "Memori Jangka Pendek vs Jangka Panjang: Kapasitas dan durasi penyimpanan.",
+                            "Lupa & Distorsi Memori: Mengapa kita lupa dan bagaimana ingatan bisa salah."
+                        ]
+                    },
+                    {
+                        title: "8. Kognisi, Bahasa, & Inteligensi",
+                        items: [
+                            "Berpikir & Pemecahan Masalah: Konsep, prototipe, dan strategi pemecahan masalah.",
+                            "Bahasa: Struktur bahasa dan tahap perkembangan bahasa.",
+                            "Inteligensi: Teori-teori tentang kecerdasan (Spearman, Gardner, Sternberg) dan pengukurannya."
+                        ]
+                    }
+                ]
+            },
+            {
+                title: "Fase 4: Perkembangan & Dunia Sosial",
+                topics: [
+                    {
+                        title: "9. Psikologi Perkembangan",
+                        items: [
+                            "Perkembangan Prenatal & Masa Bayi: Dari konsepsi hingga perkembangan motorik awal.",
+                            "Perkembangan Kognitif (Piaget): Tahapan sensomotorik, praoperasional, dll.",
+                            "Perkembangan Sosial & Emosional: Teori kelekatan (attachment) dan perkembangan psikososial (Erikson).",
+                            "Masa Remaja, Dewasa, & Tua: Perubahan fisik, kognitif, dan sosial sepanjang hidup."
+                        ]
+                    },
+                    {
+                        title: "10. Motivasi & Emosi",
+                        items: [
+                            "Teori Motivasi: Hierarki kebutuhan (Maslow), teori dorongan, dan teori insentif.",
+                            "Motivasi Biologis: Lapar, haus, dan seks.",
+                            "Teori Emosi: James-Lange, Cannon-Bard, dan Schachter-Singer (Two-Factor)."
+                        ]
+                    },
+                    {
+                        title: "11. Psikologi Sosial",
+                        items: [
+                            "Persepsi Sosial: Atribusi, sikap, dan prasangka.",
+                            "Pengaruh Sosial: Konformitas (Asch), kepatuhan (Milgram), dan deindividuasi.",
+                            "Perilaku Kelompok & Hubungan Antarpribadi: Ketertarikan, altruisme, dan agresi."
+                        ]
+                    }
+                ]
+            },
+            {
+                title: "Fase 5: Kepribadian & Kesehatan Mental",
+                topics: [
+                    {
+                        title: "12. Kepribadian",
+                        items: [
+                            "Teori Psikoanalisis (Freud): Id, ego, superego, dan mekanisme pertahanan.",
+                            "Teori Humanistik (Rogers, Maslow): Aktualisasi diri dan pandangan positif.",
+                            "Teori Trait (The Big Five): Mengukur dimensi kepribadian (OCEAN).",
+                            "Teori Kognitif-Sosial (Bandura): Peran keyakinan dan lingkungan."
+                        ]
+                    },
+                     {
+                        title: "13. Gangguan Psikologis",
+                        items: [
+                            "Pengantar Psikologi Abnormal: Definisi dan klasifikasi (DSM).",
+                            "Gangguan Kecemasan: Fobia, gangguan panik, GAD, OCD.",
+                            "Gangguan Mood: Depresi mayor dan gangguan bipolar.",
+                            "Skizofrenia: Gejala positif, negatif, dan kognitif.",
+                            "Gangguan Kepribadian & Gangguan Lainnya."
+                        ]
+                    },
+                    {
+                        title: "14. Terapi & Perawatan",
+                        items: [
+                            "Terapi Psikodinamik: Menjelajahi alam bawah sadar.",
+                            "Terapi Perilaku: Mengubah perilaku maladaptif.",
+                            "Terapi Kognitif & CBT: Mengubah pola pikir negatif.",
+                            "Terapi Humanistik: Fokus pada pertumbuhan pribadi.",
+                            "Terapi Biomedis: Penggunaan obat-obatan dan prosedur medis."
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        // --- DOM ELEMENTS ---
+        const learningPathContainer = document.getElementById('learning-path');
+        const chartsContainer = document.querySelector('#progress-charts .grid');
+        const geminiModal = document.getElementById('gemini-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        const modalCloseBtn = document.getElementById('modal-close');
+        
+        const storageKey = 'psychologyLearningProgress';
+        let charts = {};
+
+        // --- GEMINI API LOGIC ---
+        async function callGemini(prompt) {
+            const apiKey = ""; // API key will be provided by the environment
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{
+                    role: "user",
+                    parts: [{ text: prompt }]
+                }]
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    // Replace markdown-like formatting with HTML tags for better display
+                    let text = result.candidates[0].content.parts[0].text;
+                    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); // Bold
+                    text = text.replace(/\n/g, '<br>'); // Newlines
+                    return text;
+                } else {
+                    console.error("Unexpected API response structure:", result);
+                    return "Maaf, terjadi kesalahan saat memproses respons dari AI. Strukturnya tidak terduga.";
+                }
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                return "Maaf, tidak dapat terhubung ke layanan AI saat ini. Silakan periksa koneksi Anda dan coba lagi.";
+            }
+        }
+
+
+        // --- UI & CHECKLIST LOGIC ---
+        function generateChecklist() {
+            curriculum.forEach((phase, phaseIndex) => {
+                const phaseEl = document.createElement('div');
+                phaseEl.className = 'phase-card rounded-lg p-6 shadow-lg scroll-animate';
+                phaseEl.innerHTML = `<h2 class="text-2xl font-bold mb-4 border-b border-cyan-500/30 pb-2 gradient-text">${phase.title}</h2>`;
+
+                const topicsContainer = document.createElement('div');
+                topicsContainer.className = 'space-y-6';
+
+                phase.topics.forEach((topic, topicIndex) => {
+                    const topicEl = document.createElement('div');
+                    topicEl.innerHTML = `<h3 class="text-lg font-semibold text-gray-300 mb-3">${topic.title}</h3>`;
+
+                    const itemsList = document.createElement('ul');
+                    itemsList.className = 'space-y-3 pl-4';
+                    
+                    topic.items.forEach((item, itemIndex) => {
+                        const itemId = `p${phaseIndex}-t${topicIndex}-i${itemIndex}`;
+                        const itemEl = document.createElement('li');
+                        itemEl.className = 'checklist-item flex justify-between items-center';
+                        itemEl.innerHTML = `
+                            <label for="${itemId}" class="flex items-start gap-3 cursor-pointer group flex-grow">
+                                <input type="checkbox" id="${itemId}" data-phase="${phaseIndex}" class="custom-checkbox mt-1">
+                                <span class="text-gray-400 group-hover:text-white transition-colors">${item}</span>
+                            </label>
+                            <button class="gemini-btn explain-btn" data-concept="${item}">✨ Jelaskan</button>
+                        `;
+                        itemsList.appendChild(itemEl);
+                    });
+                    topicEl.appendChild(itemsList);
+                    
+                    // Add "Create Case Study" button for the topic
+                    const caseStudyBtn = document.createElement('button');
+                    caseStudyBtn.className = 'case-study-btn';
+                    caseStudyBtn.innerHTML = '✨ Buat Studi Kasus';
+                    caseStudyBtn.dataset.topicTitle = topic.title;
+                    caseStudyBtn.dataset.topicItems = JSON.stringify(topic.items);
+                    topicEl.appendChild(caseStudyBtn);
+
+                    topicsContainer.appendChild(topicEl);
+                });
+
+                phaseEl.appendChild(topicsContainer);
+                learningPathContainer.appendChild(phaseEl);
+            });
+        }
+
+        function generateChartContainers() {
+            curriculum.forEach((phase, phaseIndex) => {
+                const chartWrapper = document.createElement('div');
+                chartWrapper.className = 'phase-card rounded-lg p-4 flex flex-col items-center justify-center scroll-animate';
+                chartWrapper.style.transitionDelay = `${300 + phaseIndex * 50}ms`;
+                chartWrapper.innerHTML = `
+                    <div class="chart-container">
+                        <canvas id="chart-phase-${phaseIndex}"></canvas>
+                    </div>
+                    <h3 class="text-md font-semibold text-center mt-3 text-gray-300">Fase ${phaseIndex + 1}</h3>
+                `;
+                chartsContainer.appendChild(chartWrapper);
+            });
+        }
+
+        function updateCharts() {
+            curriculum.forEach((phase, phaseIndex) => {
+                const checkboxes = document.querySelectorAll(`input[data-phase='${phaseIndex}']`);
+                const total = checkboxes.length;
+                const completed = document.querySelectorAll(`input[data-phase='${phaseIndex}']:checked`).length;
+                const remaining = total - completed;
+                const ctx = document.getElementById(`chart-phase-${phaseIndex}`).getContext('2d');
+                
+                if (charts[phaseIndex]) {
+                    charts[phaseIndex].data.datasets[0].data = [completed, remaining];
+                    charts[phaseIndex].update();
+                } else {
+                    charts[phaseIndex] = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Selesai', 'Belum'],
+                            datasets: [{
+                                data: [completed, remaining],
+                                backgroundColor: ['#FF00FF', '#2a2a3a'],
+                                borderColor: 'rgba(20, 20, 40, 0.6)',
+                                borderWidth: 4,
+                                hoverOffset: 8
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '70%',
+                            plugins: { legend: { display: false }, tooltip: { enabled: true } }
+                        }
+                    });
+                }
+            });
+        }
+
+        function updateOverallProgress() {
+            const allCheckboxes = document.querySelectorAll('#learning-path input[type="checkbox"]');
+            const totalTasks = allCheckboxes.length;
+            const completedTasks = document.querySelectorAll('#learning-path input[type="checkbox"]:checked').length;
+            const percentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+            document.getElementById('overall-progress-text').textContent = `${percentage.toFixed(1)}%`;
+            document.getElementById('overall-progress-bar').style.width = `${percentage}%`;
+        }
+
+        function saveProgress() {
+            const progress = {};
+            document.querySelectorAll('#learning-path input[type="checkbox"]').forEach(cb => {
+                progress[cb.id] = cb.checked;
+            });
+            localStorage.setItem(storageKey, JSON.stringify(progress));
+        }
+
+        function loadProgress() {
+            const savedProgress = JSON.parse(localStorage.getItem(storageKey));
+            if (savedProgress) {
+                Object.keys(savedProgress).forEach(id => {
+                    const checkbox = document.getElementById(id);
+                    if (checkbox) checkbox.checked = savedProgress[id];
+                });
+            }
+        }
+
+        function setupScrollAnimation() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.scroll-animate').forEach(el => observer.observe(el));
+        }
+
+        // --- MODAL CONTROL ---
+        function showModal() {
+            geminiModal.classList.add('visible');
+        }
+        function hideModal() {
+            geminiModal.classList.remove('visible');
+        }
+        function setModalLoading(isLoading, title = "Memuat...") {
+            modalTitle.textContent = title;
+            if (isLoading) {
+                modalBody.innerHTML = `<div class="flex justify-center items-center h-48"><div class="loader"></div></div>`;
+            }
+        }
+
+        // --- EVENT HANDLERS ---
+        function handleGeminiRequest(e) {
+            const target = e.target;
+            
+            if (target.classList.contains('explain-btn')) {
+                const concept = target.dataset.concept;
+                showModal();
+                setModalLoading(true, "Menjelaskan Konsep");
+                const prompt = `Jelaskan konsep psikologi berikut dalam bahasa Indonesia, dengan cara yang sederhana, ringkas (cukup 2-4 kalimat), dan mudah dipahami untuk seorang pemula: "${concept}"`;
+                callGemini(prompt).then(response => {
+                    modalBody.innerHTML = response;
+                });
+            }
+
+            if (target.classList.contains('case-study-btn')) {
+                const topicTitle = target.dataset.topicTitle;
+                const topicItems = JSON.parse(target.dataset.topicItems).join(', ');
+                showModal();
+                setModalLoading(true, `Studi Kasus: ${topicTitle}`);
+                const prompt = `Anda adalah seorang asisten pengajar psikologi. Buatkan sebuah studi kasus fiksi singkat (sekitar 2-4 paragraf) dalam bahasa Indonesia yang mengilustrasikan penerapan praktis dari topik psikologi: "${topicTitle}". Pastikan studi kasus tersebut secara implisit atau eksplisit menyentuh poin-poin berikut: ${topicItems}. Buatlah agar menarik dan mudah dipahami oleh mahasiswa tingkat awal.`;
+                callGemini(prompt).then(response => {
+                    modalBody.innerHTML = response;
+                });
+            }
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            generateChartContainers();
+            generateChecklist();
+            loadProgress();
+            updateCharts();
+            updateOverallProgress();
+            setupScrollAnimation();
+
+            learningPathContainer.addEventListener('change', (e) => {
+                if (e.target.type === 'checkbox') {
+                    saveProgress();
+                    updateCharts();
+                    updateOverallProgress();
+                }
+            });
+
+            // Event delegation for Gemini buttons
+            document.body.addEventListener('click', handleGeminiRequest);
+
+            // Modal close events
+            modalCloseBtn.addEventListener('click', hideModal);
+            geminiModal.addEventListener('click', (e) => {
+                if (e.target.id === 'gemini-modal') {
+                    hideModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
